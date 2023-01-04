@@ -78,6 +78,7 @@ static bool just_structs;
 static bool just_packed_structs;
 static int show_reorg_steps;
 static const char *class_name;
+static const char *variable_name;
 static LIST_HEAD(class_names);
 static char separator = '\t';
 
@@ -616,6 +617,31 @@ static void print_classes(struct cu *cu)
 			continue; // we'll print it at the end, in order, out of structures__tree
 		else if (formatter != NULL)
 			formatter(pos, cu, id);
+	}
+}
+
+
+static void print_variable_class(struct cu *cu, const char *var_name)
+{
+	uint32_t id;
+	struct tag *tag;
+        char bf[512];
+        
+	cu__for_each_variable(cu, id, tag) {
+            struct variable *var = tag__variable(tag);
+            if (strcmp(var->name, var_name) == 0) {
+                char *vtn = (char *)variable__type_name(var, cu, bf, sizeof(bf));
+                char *pch = strtok (vtn," ");
+                char *last_word = pch;
+                while (pch != NULL)
+                {
+                    pch = strtok (NULL, " ");
+                    if (pch != NULL)
+                        last_word = pch;
+                }
+                formatter((struct class *)cu__find_type_by_name(cu, last_word, 1, NULL), cu, id);
+                return;
+            }
 	}
 }
 
@@ -1633,6 +1659,12 @@ static const struct argp_option pahole__options[] = {
 		.key  = ARGP_skip_emitting_atomic_typedefs,
 		.doc  = "Do not emit 'typedef _Atomic int atomic_int' & friends."
 	},
+        {
+		.name = "variable",
+		.key  = 'v',
+		.arg  = "VAR_NAME",
+		.doc  = "Show struct of variable with name"
+	},
 	{
 		.name = NULL,
 	}
@@ -1650,6 +1682,7 @@ static error_t pahole__options_parser(int key, char *arg,
 	case 'a': class__include_anonymous = 1;		break;
 	case 'B': nr_bit_holes = atoi(arg);		break;
 	case 'C': class_name = arg;			break;
+        case 'v': variable_name = arg;			break;
 	case 'c': cacheline_size = atoi(arg);		break;
 	case 'D': decl_exclude_prefix = arg;
 		  decl_exclude_prefix_len = strlen(decl_exclude_prefix);
@@ -3107,7 +3140,10 @@ out_btf:
 		if (word_size != 0)
 			cu_fixup_word_size_iterator(cu);
 
-		print_classes(cu);
+                if (variable_name)
+                    print_variable_class(cu, variable_name);
+                else
+                    print_classes(cu);
 
 		if (sort_output && formatter == class_formatter)
 			ret = LSK__KEEPIT;
