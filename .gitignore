@@ -1,2 +1,4 @@
 /build
 /config.h
+compile_commands.json
+.ccls-cache
