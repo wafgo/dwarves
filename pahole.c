@@ -621,28 +621,79 @@ static void print_classes(struct cu *cu)
 }
 
 
+
+static char** split_variable_names(const char *var_name, int* noe)
+{
+    char *token = NULL;
+    char *tlist  = (char*) var_name;
+    char **token_list = NULL;
+    int number_of_elements = 0;
+    while ((token = strtok(tlist,","))) {
+        token_list = realloc(token_list, (number_of_elements + 1) * sizeof(char *));
+        if (token_list == NULL)
+            goto paranoid_free;
+        token_list[number_of_elements] = malloc(strlen(token) + 1);
+        if (token_list[number_of_elements] == NULL)
+            goto paranoid_free;
+        strcpy(token_list[number_of_elements], token);
+        number_of_elements++;
+        tlist = NULL;
+    }
+    if (noe)
+        *noe = number_of_elements;
+    return token_list;
+    
+paranoid_free:
+    for (int i = 0; i < number_of_elements; ++i) {
+        if (token_list[i] != NULL)
+            free(token_list[i]);
+    }
+    if (token_list != NULL)
+        free(token_list);
+    return NULL;
+}
+
+
 static void print_variable_class(struct cu *cu, const char *var_name)
 {
 	uint32_t id;
 	struct tag *tag;
         char bf[512];
-        
-	cu__for_each_variable(cu, id, tag) {
-            struct variable *var = tag__variable(tag);
-            if (strcmp(var->name, var_name) == 0) {
-                char *vtn = (char *)variable__type_name(var, cu, bf, sizeof(bf));
-                char *pch = strtok (vtn," ");
-                char *last_word = pch;
-                while (pch != NULL)
-                {
-                    pch = strtok (NULL, " ");
-                    if (pch != NULL)
-                        last_word = pch;
+        int noe;
+        char **all_elems = split_variable_names(var_name, &noe);
+        for (int i = 0; i < noe; ++i) {
+            char *vname = all_elems[i];
+            printf(">>>>> %s\n", vname);
+            cu__for_each_variable(cu, id, tag) {
+                struct variable *var = tag__variable(tag);
+                
+                if (strcmp(variable__name(var), vname) == 0) {
+                    char *vtn = (char *)variable__type_name(var, cu, bf, sizeof(bf));
+                    char *pch = strtok (vtn," ");
+                    char *last_valid_word = pch;
+                    while (pch != NULL) {
+                     pch = strtok(NULL, " ");
+                        if (pch != NULL &&
+                            strcmp(pch, "const") != 0 &&
+                            strcmp(pch, "*") != 0 &&
+                            strcmp(pch, "volatile") != 0) {
+                            last_valid_word = pch;
+                        }
+                    }
+                    
+                    struct tag *vtag = cu__find_type_by_name(cu, last_valid_word, 1, NULL);
+                    if (vtag && tag__is_typedef(vtag))
+                        vtag = tag__follow_typedef(vtag, cu);
+
+                    if (formatter && vtag &&
+                        (tag__is_struct(vtag) || tag__is_union(vtag)))
+                        formatter((struct class *)vtag, cu, id);
+
+                    break;
                 }
-                formatter((struct class *)cu__find_type_by_name(cu, last_word, 1, NULL), cu, id);
-                return;
             }
-	}
+            printf("<<<<< %s\n", vname);
+        }
 }
 
 static void __print_ordered_classes(struct rb_root *root)
