@@ -14,7 +14,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <inttypes.h>
-#include <elfutils/version.h>
+#include <build/version.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

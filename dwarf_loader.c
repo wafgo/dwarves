@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <dirent.h>
 #include <dwarf.h>
-#include <elfutils/libdwfl.h>
+#include <libdwfl/libdwfl.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>

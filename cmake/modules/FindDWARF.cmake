@@ -19,27 +19,51 @@ find_path(DWARF_INCLUDE_DIR dwarf.h
 	/usr/local/include
 	/usr/include/libdwarf
 	~/usr/local/include
+	~/elfutils/libdw
 )
 
-find_path(LIBDW_INCLUDE_DIR elfutils/libdw.h
+find_path(LIBDW_INCLUDE_DIR libdw/libdw.h
 	/usr/include
 	/usr/local/include
 	~/usr/local/include
+	~/elfutils
+
 )
 
 find_library(DWARF_LIBRARY
 	NAMES dw dwarf
-	PATHS /usr/lib /usr/local/lib /usr/lib64 /usr/local/lib64 ~/usr/local/lib ~/usr/local/lib64
+	PATHS /usr/lib /usr/local/lib /usr/lib64 /usr/local/lib64 ~/usr/local/lib ~/usr/local/lib64 ~/elfutils/build/libdw
 )
 
 find_library(ELF_LIBRARY
 	NAMES elf
-	PATHS /usr/lib /usr/local/lib /usr/lib64 /usr/local/lib64 ~/usr/local/lib ~/usr/local/lib64
+	PATHS /usr/lib /usr/local/lib /usr/lib64 /usr/local/lib64 ~/usr/local/lib ~/usr/local/lib64 ~/elfutils/build/libelf
 )
 
-if (DWARF_INCLUDE_DIR AND LIBDW_INCLUDE_DIR AND DWARF_LIBRARY AND ELF_LIBRARY)
+find_library(INTL_LIBRARY
+	NAMES intl
+	PATHS /usr/lib /usr/local/lib /usr/lib64 /usr/local/lib64 ~/usr/local/lib ~/usr/local/lib64 ~/elfutils/build/libelf
+)
+
+find_library(BZ2_LIBRARY
+	NAMES bz2
+	PATHS /usr/lib /usr/local/lib /usr/lib64 /usr/local/lib64 ~/usr/local/lib ~/usr/local/lib64 ~/elfutils/build/libelf
+)
+
+find_library(LZMA_LIBRARY
+	NAMES lzma
+	PATHS /usr/lib /usr/local/lib /usr/lib64 /usr/local/lib64 ~/usr/local/lib ~/usr/local/lib64 ~/elfutils/build/libelf
+)
+
+
+find_library(EBL_LIBRARY
+	NAMES ebl
+	PATHS ~/elfutils/build/libebl
+)
+
+if (DWARF_INCLUDE_DIR AND LIBDW_INCLUDE_DIR AND DWARF_LIBRARY AND ELF_LIBRARY AND EBL_LIBRARY AND INTL_LIBRARY AND BZ2_LIBRARY AND LZMA_LIBRARY)
 	set(DWARF_FOUND TRUE)
-	set(DWARF_LIBRARIES ${DWARF_LIBRARY} ${ELF_LIBRARY})
+	set(DWARF_LIBRARIES ${DWARF_LIBRARY} ${ELF_LIBRARY} ${EBL_LIBRARY} ${INTL_LIBRARY} ${BZ2_LIBRARY} ${LZMA_LIBRARY})
 
 	set(CMAKE_REQUIRED_LIBRARIES ${DWARF_LIBRARIES})
 	# check if libdw have the dwfl_module_build_id routine, i.e. if it supports the buildid

@@ -10,7 +10,7 @@
  */
 
 #include <stdbool.h>
-#include <linux/stddef.h>
+//#include <linux/stddef.h>
 #include <stddef.h>
 #include <string.h>
 #include <elf.h>
@@ -47,10 +47,10 @@ static inline __attribute__((const)) bool is_power_of_2(unsigned long n)
  * This is defined the same way as ffs.
  * Note fls(0) = 0, fls(1) = 1, fls(0x80000000) = 32.
  */
-static __always_inline int fls(int x)
-{
-	return x ? sizeof(x) * 8 - __builtin_clz(x) : 0;
-}
+/* static __always_inline int fls(int x) */
+/* { */
+/* 	return x ? sizeof(x) * 8 - __builtin_clz(x) : 0; */
+/* } */
 
 /**
  * fls64 - find last set bit in a 64-bit word

@@ -35,35 +35,35 @@
 #define obstack_chunk_alloc malloc
 #define obstack_chunk_free free
 
-static void *obstack_zalloc(struct obstack *obstack, size_t size)
-{
-	void *o = obstack_alloc(obstack, size);
+/* static void *obstack_zalloc(struct obstack *obstack, size_t size) */
+/* { */
+/* 	void *o = obstack_alloc(obstack, size); */
 
-	if (o)
-		memset(o, 0, size);
-	return o;
-}
+/* 	if (o) */
+/* 		memset(o, 0, size); */
+/* 	return o; */
+/* } */
 
 void *cu__zalloc(struct cu *cu, size_t size)
 {
-	if (cu->use_obstack)
-		return obstack_zalloc(&cu->obstack, size);
+	/* if (cu->use_obstack) */
+	/* 	return obstack_zalloc(&cu->obstack, size); */
 
 	return zalloc(size);
 }
 
 void *cu__malloc(struct cu *cu, size_t size)
 {
-	if (cu->use_obstack)
-		return obstack_alloc(&cu->obstack, size);
+	/* if (cu->use_obstack) */
+	/* 	return obstack_alloc(&cu->obstack, size); */
 
 	return malloc(size);
 }
 
 void cu__free(struct cu *cu, void *ptr)
 {
-	if (!cu->use_obstack)
-		free(ptr);
+	/* if (!cu->use_obstack) */
+	/* 	free(ptr); */
 
 	// When using an obstack we'll free everything in cu__delete()
 }
@@ -632,8 +632,8 @@ struct cu *cu__new(const char *name, uint8_t addr_size,
 		uint32_t void_id;
 
 		cu->use_obstack = use_obstack;
-		if (cu->use_obstack)
-			obstack_init(&cu->obstack);
+		/* if (cu->use_obstack) */
+		/* 	obstack_init(&cu->obstack); */
 
 		cu->name = strdup(name);
 		if (cu->name == NULL)
@@ -697,8 +697,8 @@ void cu__delete(struct cu *cu)
 	if (cu->dfops && cu->dfops->cu__delete)
 		cu->dfops->cu__delete(cu);
 
-	if (cu->use_obstack)
-		obstack_free(&cu->obstack, NULL);
+	/* if (cu->use_obstack) */
+	/* 	obstack_free(&cu->obstack, NULL); */
 
 	zfree(&cu->filename);
 	zfree(&cu->name);
@@ -1988,7 +1988,7 @@ extern struct debug_fmt_ops dwarf__ops, ctf__ops, btf__ops;
 
 static struct debug_fmt_ops *debug_fmt_table[] = {
 	&dwarf__ops,
-	&btf__ops,
+	/* &btf__ops, */
 	&ctf__ops,
 	NULL,
 };

@@ -10,9 +10,9 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <obstack.h>
+//#include <obstack.h>
 #include <dwarf.h>
-#include <elfutils/libdwfl.h>
+#include <libdwfl/libdwfl.h>
 #include <sys/types.h>
 
 #include "dutil.h"
@@ -254,7 +254,7 @@ struct cu {
 	struct debug_fmt_ops *dfops;
 	Elf		 *elf;
 	Dwfl_Module	 *dwfl;
-	struct obstack	 obstack;
+	/* struct obstack	 obstack; */
 	uint32_t	 cached_symtab_nr_entries;
 	bool		 use_obstack;
 	uint8_t		 addr_size;

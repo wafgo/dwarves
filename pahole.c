@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <dwarf.h>
-#include <elfutils/version.h>
+#include <build/version.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <pthread.h>
@@ -19,17 +19,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <bpf/btf.h>
-#include "bpf/libbpf.h"
+/* #include <bpf/btf.h> */
+/* #include "bpf/libbpf.h" */
 
 #include "dwarves_reorganize.h"
 #include "dwarves.h"
 #include "dwarves_emit.h"
 #include "dutil.h"
 //#include "ctf_encoder.h" FIXME: disabled, probably its better to move to Oracle's libctf
-#include "btf_encoder.h"
+/* #include "btf_encoder.h" */
 
-static struct btf_encoder *btf_encoder;
+/* static struct btf_encoder *btf_encoder; */
 static char *detached_btf_filename;
 static bool btf_encode;
 static bool btf_gen_floats;
@@ -3059,26 +3059,26 @@ static int pahole_threads_collect(struct conf_load *conf, int nr_threads, void *
 	if (error)
 		goto out;
 
-	for (i = 0; i < nr_threads; i++) {
-		/*
-		 * Merge content of the btf instances of worker threads to the btf
-		 * instance of the primary btf_encoder.
-                */
-		if (!threads[i]->btf || threads[i]->encoder == btf_encoder)
-			continue; /* The primary btf_encoder */
-		err = btf_encoder__add_encoder(btf_encoder, threads[i]->encoder);
-		if (err < 0)
-			goto out;
-		btf_encoder__delete(threads[i]->encoder);
-		threads[i]->encoder = NULL;
-	}
-	err = 0;
+	/* for (i = 0; i < nr_threads; i++) { */
+	/* 	/\* */
+	/* 	 * Merge content of the btf instances of worker threads to the btf */
+	/* 	 * instance of the primary btf_encoder. */
+        /*         *\/ */
+	/* 	if (!threads[i]->btf || threads[i]->encoder == btf_encoder) */
+	/* 		continue; /\* The primary btf_encoder *\/ */
+	/* 	err = btf_encoder__add_encoder(btf_encoder, threads[i]->encoder); */
+	/* 	if (err < 0) */
+	/* 		goto out; */
+	/* 	btf_encoder__delete(threads[i]->encoder); */
+	/* 	threads[i]->encoder = NULL; */
+	/* } */
+	/* err = 0; */
 
 out:
-	for (i = 0; i < nr_threads; i++) {
-		if (threads[i]->encoder && threads[i]->encoder != btf_encoder)
-			btf_encoder__delete(threads[i]->encoder);
-	}
+	/* for (i = 0; i < nr_threads; i++) { */
+	/* 	if (threads[i]->encoder && threads[i]->encoder != btf_encoder) */
+	/* 		btf_encoder__delete(threads[i]->encoder); */
+	/* } */
 	free(threads[0]);
 
 	return err;
@@ -3103,72 +3103,72 @@ static enum load_steal_kind pahole_stealer(struct cu *cu,
 		cu__fprintf_ptr_table_stats_csv(cu, stderr);
 	}
 
-	if (btf_encode) {
-		static pthread_mutex_t btf_lock = PTHREAD_MUTEX_INITIALIZER;
-		struct btf_encoder *encoder;
+	/* if (btf_encode) { */
+/* 		static pthread_mutex_t btf_lock = PTHREAD_MUTEX_INITIALIZER; */
+/* 		struct btf_encoder *encoder; */
 
-		pthread_mutex_lock(&btf_lock);
-		/*
-		 * FIXME:
-		 *
-		 * This should be really done at main(), but since in the current codebase only at this
-		 * point we'll have cu->elf setup...
-		 */
-		if (!btf_encoder) {
-			/*
-			 * btf_encoder is the primary encoder.
-			 * And, it is used by the thread
-			 * create it.
-			 */
-			btf_encoder = btf_encoder__new(cu, detached_btf_filename, conf_load->base_btf, skip_encoding_btf_vars,
-						       btf_encode_force, btf_gen_floats, global_verbose);
-			if (btf_encoder && thr_data) {
-				struct thread_data *thread = thr_data;
+/* 		pthread_mutex_lock(&btf_lock); */
+/* 		/\* */
+/* 		 * FIXME: */
+/* 		 * */
+/* 		 * This should be really done at main(), but since in the current codebase only at this */
+/* 		 * point we'll have cu->elf setup... */
+/* 		 *\/ */
+/* 		if (!btf_encoder) { */
+/* 			/\* */
+/* 			 * btf_encoder is the primary encoder. */
+/* 			 * And, it is used by the thread */
+/* 			 * create it. */
+/* 			 *\/ */
+/* 			btf_encoder = btf_encoder__new(cu, detached_btf_filename, conf_load->base_btf, skip_encoding_btf_vars, */
+/* 						       btf_encode_force, btf_gen_floats, global_verbose); */
+/* 			if (btf_encoder && thr_data) { */
+/* 				struct thread_data *thread = thr_data; */
 
-				thread->encoder = btf_encoder;
-				thread->btf = btf_encoder__btf(btf_encoder);
-			}
-		}
-		pthread_mutex_unlock(&btf_lock);
+/* 				thread->encoder = btf_encoder; */
+/* 				thread->btf = btf_encoder__btf(btf_encoder); */
+/* 			} */
+/* 		} */
+/* 		pthread_mutex_unlock(&btf_lock); */
 
-		if (!btf_encoder) {
-			ret = LSK__STOP_LOADING;
-			goto out_btf;
-		}
+/* 		if (!btf_encoder) { */
+/* 			ret = LSK__STOP_LOADING; */
+/* 			goto out_btf; */
+/* 		} */
 
-		/*
-		 * thr_data keeps per-thread data for worker threads.  Each worker thread
-		 * has an encoder.  The main thread will merge the data collected by all
-		 * these encoders to btf_encoder.  However, the first thread reaching this
-		 * function creates btf_encoder and reuses it as its local encoder.  It
-		 * avoids copying the data collected by the first thread.
-		 */
-		if (thr_data) {
-			struct thread_data *thread = thr_data;
+/* 		/\* */
+/* 		 * thr_data keeps per-thread data for worker threads.  Each worker thread */
+/* 		 * has an encoder.  The main thread will merge the data collected by all */
+/* 		 * these encoders to btf_encoder.  However, the first thread reaching this */
+/* 		 * function creates btf_encoder and reuses it as its local encoder.  It */
+/* 		 * avoids copying the data collected by the first thread. */
+/* 		 *\/ */
+/* 		if (thr_data) { */
+/* 			struct thread_data *thread = thr_data; */
 
-			if (thread->encoder == NULL) {
-				thread->encoder =
-					btf_encoder__new(cu, detached_btf_filename,
-							 NULL,
-							 skip_encoding_btf_vars,
-							 btf_encode_force,
-							 btf_gen_floats,
-							 global_verbose);
-				thread->btf = btf_encoder__btf(thread->encoder);
-			}
-			encoder = thread->encoder;
-		} else {
-			encoder = btf_encoder;
-		}
+/* 			if (thread->encoder == NULL) { */
+/* 				thread->encoder = */
+/* 					btf_encoder__new(cu, detached_btf_filename, */
+/* 							 NULL, */
+/* 							 skip_encoding_btf_vars, */
+/* 							 btf_encode_force, */
+/* 							 btf_gen_floats, */
+/* 							 global_verbose); */
+/* 				thread->btf = btf_encoder__btf(thread->encoder); */
+/* 			} */
+/* 			encoder = thread->encoder; */
+/* 		} else { */
+/* 			encoder = btf_encoder; */
+/* 		} */
 
-		if (btf_encoder__encode_cu(encoder, cu, conf_load)) {
-			fprintf(stderr, "Encountered error while encoding BTF.\n");
-			exit(1);
-		}
-		ret = LSK__DELETE;
-out_btf:
-		return ret;
-	}
+/* 		if (btf_encoder__encode_cu(encoder, cu, conf_load)) { */
+/* 			fprintf(stderr, "Encountered error while encoding BTF.\n"); */
+/* 			exit(1); */
+/* 		} */
+/* 		ret = LSK__DELETE; */
+/* out_btf: */
+/* 		return ret; */
+/* 	} */
 #if 0
 	if (ctf_encode) {
 		cu__encode_ctf(cu, global_verbose);
@@ -3515,18 +3515,18 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (base_btf_file) {
-		conf_load.base_btf = btf__parse(base_btf_file, NULL);
-		if (libbpf_get_error(conf_load.base_btf)) {
-			fprintf(stderr, "Failed to parse base BTF '%s': %ld\n",
-				base_btf_file, libbpf_get_error(conf_load.base_btf));
-			goto out;
-		}
-		if (!btf_encode && !ctf_encode) {
-			// Force "btf" since a btf_base is being informed
-			conf_load.format_path = "btf";
-		}
-	}
+	/* if (base_btf_file) { */
+	/* 	conf_load.base_btf = btf__parse(base_btf_file, NULL); */
+	/* 	if (libbpf_get_error(conf_load.base_btf)) { */
+	/* 		fprintf(stderr, "Failed to parse base BTF '%s': %ld\n", */
+	/* 			base_btf_file, libbpf_get_error(conf_load.base_btf)); */
+	/* 		goto out; */
+	/* 	} */
+	/* 	if (!btf_encode && !ctf_encode) { */
+	/* 		// Force "btf" since a btf_base is being informed */
+	/* 		conf_load.format_path = "btf"; */
+	/* 	} */
+	/* } */
 
 	struct cus *cus = cus__new();
 	if (cus == NULL) {
@@ -3552,21 +3552,21 @@ try_sole_arg_as_class_names:
 	if (class_name && populate_class_names())
 		goto out_dwarves_exit;
 
-	if (base_btf_file == NULL) {
-		const char *filename = argv[remaining];
+	/* if (base_btf_file == NULL) { */
+	/* 	const char *filename = argv[remaining]; */
 
-		if (filename &&
-		    strstarts(filename, "/sys/kernel/btf/") &&
-		    strstr(filename, "/vmlinux") == NULL) {
-			base_btf_file = "/sys/kernel/btf/vmlinux";
-			conf_load.base_btf = btf__parse(base_btf_file, NULL);
-			if (libbpf_get_error(conf_load.base_btf)) {
-				fprintf(stderr, "Failed to parse base BTF '%s': %ld\n",
-					base_btf_file, libbpf_get_error(conf_load.base_btf));
-				goto out;
-			}
-		}
-	}
+	/* 	if (filename && */
+	/* 	    strstarts(filename, "/sys/kernel/btf/") && */
+	/* 	    strstr(filename, "/vmlinux") == NULL) { */
+	/* 		base_btf_file = "/sys/kernel/btf/vmlinux"; */
+	/* 		conf_load.base_btf = btf__parse(base_btf_file, NULL); */
+	/* 		/\* if (libbpf_get_error(conf_load.base_btf)) { *\/ */
+	/* 		/\* 	fprintf(stderr, "Failed to parse base BTF '%s': %ld\n", *\/ */
+	/* 		/\* 		base_btf_file, libbpf_get_error(conf_load.base_btf)); *\/ */
+	/* 		/\* 	goto out; *\/ */
+	/* 		/\* } *\/ */
+	/* 	} */
+	/* } */
 
 	err = cus__load_files(cus, &conf_load, argv + remaining);
 	if (err != 0) {
@@ -3626,13 +3626,13 @@ try_sole_arg_as_class_names:
 	type_instance__delete(header);
 	header = NULL;
 
-	if (btf_encode && btf_encoder) { // maybe all CUs were filtered out and thus we don't have an encoder?
-		err = btf_encoder__encode(btf_encoder);
-		if (err) {
-			fputs("Failed to encode BTF\n", stderr);
-			goto out_cus_delete;
-		}
-	}
+	/* if (btf_encode && btf_encoder) { // maybe all CUs were filtered out and thus we don't have an encoder? */
+	/* 	err = btf_encoder__encode(btf_encoder); */
+	/* 	if (err) { */
+	/* 		fputs("Failed to encode BTF\n", stderr); */
+	/* 		goto out_cus_delete; */
+	/* 	} */
+	/* } */
 out_ok:
 	if (stats_formatter != NULL)
 		print_stats();
