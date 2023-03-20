@@ -319,6 +319,9 @@ next_type:
 	}
 
 	switch (tag_type->tag) {
+        case DW_TAG_typedef:
+                tag = tag_type;
+		goto next_type;
 	case DW_TAG_atomic_type:
 		printed += fprintf(fp, "_Atomic ");
 		tag = tag_type;
@@ -333,8 +336,16 @@ next_type:
 			printed += tag__id_not_found_fprintf(fp, tag_type->type);
 			return printed + fprintf(fp, " *%s", type__name(type));
 		}
-		if (ptr_type->tag != DW_TAG_subroutine_type)
-			break;
+                if (ptr_type->tag != DW_TAG_subroutine_type) {
+                    if (conf->expand_types != true)
+                        break;
+                    else {
+                        tag = ptr_type;
+                        goto next_type;
+                    }
+                }
+                
+                //       break;
 		tag_type = ptr_type;
 		is_pointer = 1;
 		/* Fall thru */
